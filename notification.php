@@ -100,9 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
 <!-- HEADER -->
 <header class="top-nav-notif">
     <a href="#" onclick="handleBack(event)" class="nav-back-btn-notif">
-        <svg width="20" height="20" fill="none" stroke="#6200ff" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M19 12H5M12 19l-7-7 7-7"></path>
-        </svg>
+        <img width="18" height="18" src="https://img.icons8.com/ios-filled/50/4f46e5/back.png" alt="back" />
         Kembali
     </a>
     <div class="nav-right">
