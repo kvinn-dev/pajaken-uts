@@ -7,46 +7,136 @@ include 'includes/header-plain.php';
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $conn = getDB();
 
     if ($action === 'update_profile') {
-        // Update profile data
-        $userData['first_name'] = $_POST['first_name'] ?? $userData['first_name'];
-        $userData['last_name'] = $_POST['last_name'] ?? $userData['last_name'];
-        $userData['email'] = $_POST['email'] ?? $userData['email'];
-        $userData['phone'] = $_POST['phone'] ?? $userData['phone'];
+        // Update profile data ke database
+        $stmt = $conn->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ?");
+        $userId = 1; // Ganti dengan session user ID
+        $stmt->bind_param(
+            "ssssi",
+            $_POST['first_name'],
+            $_POST['last_name'],
+            $_POST['email'],
+            $_POST['phone'],
+            $userId
+        );
 
-        $_SESSION['success'] = 'Profil berhasil diperbarui!';
+        if ($stmt->execute()) {
+            // Update session
+            $_SESSION['user_data']['first_name'] = $_POST['first_name'];
+            $_SESSION['user_data']['last_name'] = $_POST['last_name'];
+            $_SESSION['user_data']['email'] = $_POST['email'];
+            $_SESSION['user_data']['phone'] = $_POST['phone'];
+
+            $_SESSION['success'] = 'Profil berhasil diperbarui!';
+        } else {
+            $_SESSION['error'] = 'Gagal memperbarui profil!';
+        }
+
+        $stmt->close();
         header('Location: profile-info.php');
         exit;
     }
 
     if ($action === 'update_address') {
-        // Update address data
-        $userData['province'] = $_POST['province'] ?? $userData['province'];
-        $userData['city'] = $_POST['city'] ?? $userData['city'];
-        $userData['district'] = $_POST['district'] ?? $userData['district'];
-        $userData['village'] = $_POST['village'] ?? $userData['village'];
-        $userData['address_detail'] = $_POST['address_detail'] ?? $userData['address_detail'];
+        $userId = 1;
+        // Cek apakah sudah ada alamat
+        $check = $conn->query("SELECT id FROM alamat WHERE user_id = $userId");
 
-        $_SESSION['success'] = 'Alamat berhasil diperbarui!';
+        if ($check->num_rows > 0) {
+            // Update alamat yang sudah ada
+            $stmt = $conn->prepare("UPDATE alamat SET province = ?, city = ?, district = ?, village = ?, address_detail = ? WHERE user_id = ?");
+            $stmt->bind_param(
+                "sssssi",
+                $_POST['province'],
+                $_POST['city'],
+                $_POST['district'],
+                $_POST['village'],
+                $_POST['address_detail'],
+                $userId
+            );
+        } else {
+            // Insert alamat baru
+            $stmt = $conn->prepare("INSERT INTO alamat (user_id, province, city, district, village, address_detail) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "isssss",
+                $userId,
+                $_POST['province'],
+                $_POST['city'],
+                $_POST['district'],
+                $_POST['village'],
+                $_POST['address_detail']
+            );
+        }
+
+        if ($stmt->execute()) {
+            // Update session
+            $_SESSION['user_data']['province'] = $_POST['province'];
+            $_SESSION['user_data']['city'] = $_POST['city'];
+            $_SESSION['user_data']['district'] = $_POST['district'];
+            $_SESSION['user_data']['village'] = $_POST['village'];
+            $_SESSION['user_data']['address_detail'] = $_POST['address_detail'];
+
+            $_SESSION['success'] = 'Alamat berhasil diperbarui!';
+        } else {
+            $_SESSION['error'] = 'Gagal memperbarui alamat!';
+        }
+
+        $stmt->close();
         header('Location: profile-info.php');
         exit;
     }
+
+    $conn->close();
 }
 
 $success = $_SESSION['success'] ?? null;
-unset($_SESSION['success']);
-?>
+$error = $_SESSION['error'] ?? null;
+unset($_SESSION['success'], $_SESSION['error']);
 
+// Ambil data user dari database untuk ditampilkan
+$conn = getDB();
+$userId = 3;
+$stmt = $conn->prepare("
+    SELECT u.*, 
+           a.province, 
+           a.city, 
+           a.district, 
+           a.village, 
+           a.address_detail
+    FROM users u
+    LEFT JOIN alamat a ON u.id = a.user_id
+    WHERE u.id = ?
+");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$userData = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+// Jika user tidak ditemukan, gunakan data default
+if (!$userData) {
+    $userData = [
+        'first_name' => 'User',
+        'last_name' => '',
+        'email' => '',
+        'phone' => '',
+        'province' => '',
+        'city' => '',
+        'district' => '',
+        'village' => '',
+        'address_detail' => ''
+    ];
+}
+?>
 <!-- Profile Header -->
 <div class="relative bg-gradient-to-r from-primary to-purple-700 h-[200px]">
     <div class="mx-auto px-6">
         <!-- Top Navigation -->
         <div class="flex justify-between items-start pt-8">
             <a href="#" onclick="handleBack(event)" class="flex items-center gap-2 text-white/90 hover:text-white transition-colors group">
-                <svg class="group-hover:-translate-x-1 transition-transform" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M19 12H5M12 19l-7-7 7-7"></path>
-                </svg>
+                <img width="18" height="18" src="https://img.icons8.com/ios-filled/50/ffffff/back.png" alt="back" />
                 <span class="text-md font-medium">Kembali</span>
             </a>
 
@@ -61,12 +151,14 @@ unset($_SESSION['success']);
 
     <!-- Avatar -->
     <div class="absolute -bottom-20 left-10">
-        <div class="avatar-wrapper relative w-44 h-44 rounded-full overflow-hidden border-[6px] border-gray-50 bg-white">
+        <div class="avatar-wrapper" onclick="document.getElementById('avatarUpload').click()">
             <img src="assets/profile.svg" alt="profile" class="w-full h-full object-cover" />
-            <div class="avatar-upload-overlay" onclick="document.getElementById('avatarUpload').click()">
-                <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
-                    <path d="M12 4v16m8-8H4"></path>
+            <div class="avatar-upload-overlay">
+                <svg width="32" height="32" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
                 </svg>
+                <span class="avatar-upload-text">Ubah Foto</span>
             </div>
             <input type="file" id="avatarUpload" class="hidden" accept="image/*" />
         </div>
@@ -78,7 +170,7 @@ unset($_SESSION['success']);
     <!-- User Info -->
     <div class="mt-24 ml-10">
         <h1 class="text-3xl font-bold text-gray-800">
-            <?php echo htmlspecialchars($userData['first_name'] . ' ' . $userData['last_name']); ?>
+            <?php echo htmlspecialchars(($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '')); ?>
         </h1>
         <div class="flex items-center gap-2 mt-2">
             <svg width="16" height="16" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
@@ -148,7 +240,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="first_name"
-                            value="<?php echo htmlspecialchars($userData['first_name']); ?>"
+                            value="<?php echo htmlspecialchars($userData['first_name'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required />
@@ -159,7 +251,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="last_name"
-                            value="<?php echo htmlspecialchars($userData['last_name']); ?>"
+                            value="<?php echo htmlspecialchars($userData['last_name'] ?? ''); ?>"
                             class="profile-input"
                             disabled />
                     </div>
@@ -171,7 +263,7 @@ unset($_SESSION['success']);
                         <input
                             type="email"
                             name="email"
-                            value="<?php echo htmlspecialchars($userData['email']); ?>"
+                            value="<?php echo htmlspecialchars($userData['email'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required />
@@ -184,7 +276,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="phone"
-                            value="<?php echo htmlspecialchars($userData['phone']); ?>"
+                            value="<?php echo htmlspecialchars($userData['phone'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required
@@ -244,9 +336,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="city" class="profile-select" disabled required>
                             <option value="">Pilih Kab/Kota</option>
-                            <option value="Bekasi" <?php echo $userData['city'] === 'Bekasi' ? 'selected' : ''; ?>>Bekasi</option>
-                            <option value="Jakarta" <?php echo $userData['city'] === 'Jakarta' ? 'selected' : ''; ?>>Jakarta</option>
-                            <option value="Bandung" <?php echo $userData['city'] === 'Bandung' ? 'selected' : ''; ?>>Bandung</option>
+                            "<?php echo htmlspecialchars($userData['city']); ?>"
                         </select>
                     </div>
 
@@ -256,8 +346,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="district" class="profile-select" disabled required>
                             <option value="">Pilih Kecamatan</option>
-                            <option value="Mustika Jaya" <?php echo $userData['district'] === 'Mustika Jaya' ? 'selected' : ''; ?>>Mustika Jaya</option>
-                            <option value="Bekasi Utara" <?php echo $userData['district'] === 'Bekasi Utara' ? 'selected' : ''; ?>>Bekasi Utara</option>
+                            "<?php echo htmlspecialchars($userData['district'] ?? ''); ?>"
                         </select>
                     </div>
 
@@ -267,7 +356,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="village" class="profile-select" disabled required>
                             <option value="">Pilih Kelurahan</option>
-                            <option value="Mustika Jaya" <?php echo $userData['village'] === 'Mustika Jaya' ? 'selected' : ''; ?>>Mustika Jaya</option>
+                            "<?php echo htmlspecialchars($userData['village'] ?? ''); ?>"
                         </select>
                     </div>
 
@@ -306,30 +395,54 @@ unset($_SESSION['success']);
         }
     }
 
-    // Toggle edit mode for each section
+    // Simpan state editing per section
+    const editingState = {
+        profileSection: false,
+        addressSection: false
+    };
+
     function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
         const inputs = section.querySelectorAll('input, select, textarea');
         const actionsDiv = document.getElementById(sectionId.replace('Section', 'Actions'));
         const editBtn = document.getElementById(sectionId.replace('Section', 'EditBtn'));
 
-        const isEditing = !inputs[0].disabled;
+        // Toggle state
+        editingState[sectionId] = !editingState[sectionId];
+        const isEditing = editingState[sectionId];
 
+        // Update semua input
         inputs.forEach(input => {
-            input.disabled = isEditing;
+            input.disabled = !isEditing;
             if (isEditing) {
-                input.classList.remove('editable');
-            } else {
                 input.classList.add('editable');
+            } else {
+                input.classList.remove('editable');
             }
         });
 
+        // Toggle action buttons
         if (actionsDiv) {
-            actionsDiv.classList.toggle('hidden', isEditing);
+            if (isEditing) {
+                actionsDiv.classList.remove('hidden');
+            } else {
+                actionsDiv.classList.add('hidden');
+            }
         }
 
+        // Update button text & style
         if (editBtn) {
             if (isEditing) {
+                editBtn.classList.add('active');
+                editBtn.innerHTML = `
+                <span class="flex items-center gap-1.5">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg>
+                    Tutup
+                </span>
+            `;
+            } else {
                 editBtn.classList.remove('active');
                 editBtn.innerHTML = `
                 <span class="flex items-center gap-1.5">
@@ -340,18 +453,9 @@ unset($_SESSION['success']);
                     Edit
                 </span>
             `;
-            } else {
-                editBtn.classList.add('active');
-                editBtn.innerHTML = `
-                <span class="flex items-center gap-1.5">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M18 6L6 18M6 6l12 12"></path>
-                    </svg>
-                    Tutup
-                </span>
-            `;
             }
         }
+
     }
 
     // Edit All button
@@ -372,18 +476,51 @@ unset($_SESSION['success']);
     document.getElementById('avatarUpload').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            // Validasi tipe file
+            if (!file.type.startsWith('image/')) {
+                alert('Mohon pilih file gambar (JPG, PNG, GIF)');
+                return;
+            }
+
+            // Validasi ukuran (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file maksimal 5MB');
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.querySelector('.avatar-wrapper img').src = e.target.result;
-                // Show success feedback
+                const avatarImg = document.querySelector('.avatar-wrapper img');
+                avatarImg.src = e.target.result;
+
+                // Animasi sukses
                 const avatar = document.querySelector('.avatar-wrapper');
-                avatar.style.transform = 'scale(1.05)';
+                avatar.style.transform = 'scale(1.1)';
+                avatar.style.borderColor = '#10b981';
+
                 setTimeout(() => {
                     avatar.style.transform = 'scale(1)';
-                }, 200);
+                }, 300);
+
+                setTimeout(() => {
+                    avatar.style.borderColor = '#f9fafb';
+                }, 2000);
+
+                // Ubah overlay text jadi sukses
+                const overlayText = document.querySelector('.avatar-upload-text');
+                const originalText = overlayText.textContent;
+                overlayText.textContent = 'Berhasil!';
+                setTimeout(() => {
+                    overlayText.textContent = originalText;
+                }, 2000);
             };
             reader.readAsDataURL(file);
         }
+    });
+
+    // Reset input file agar bisa upload ulang file yang sama
+    document.getElementById('avatarUpload').addEventListener('click', function(e) {
+        this.value = null;
     });
 </script>
 

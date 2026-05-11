@@ -2,6 +2,9 @@
 if (!isset($pageTitle)) {
     $pageTitle = 'Pajaken';
 }
+
+// Deteksi halaman aktif
+$currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 <!doctype html>
 <html lang="id">
@@ -11,6 +14,7 @@ if (!isset($pageTitle)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?php echo $pageTitle; ?> - Pajaken</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/global.css">
     <script>
         tailwind.config = {
             theme: {
@@ -24,427 +28,6 @@ if (!isset($pageTitle)) {
             }
         }
     </script>
-    <style>
-        /* ============================================ */
-        /* TOGGLE BUTTON (Motor/Mobil)                  */
-        /* ============================================ */
-
-        /* 1. Base State - Default */
-        .toggle-btn {
-            border: 2px solid #d1d5db;
-            color: #6b7280;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 1;
-            filter: none;
-        }
-
-        /* 2. Hover - Hanya jika TIDAK disabled */
-        .toggle-btn:not([disabled]):hover {
-            border-color: #4f46e5;
-            background: #faf8ff;
-            color: #4f46e5;
-        }
-
-        /* 3. Active - State terkuat (harus override semua) */
-        .toggle-btn.active,
-        .toggle-btn[data-active="true"] {
-            border-color: #4f46e5 !important;
-            color: #4f46e5 !important;
-            background: #f0ebff !important;
-            font-weight: 600;
-            opacity: 1 !important;
-            cursor: pointer;
-            filter: none !important;
-            pointer-events: auto;
-        }
-
-        /* 4. Disabled - Saat belum pilih kendaraan */
-        .toggle-btn[disabled],
-        .toggle-btn.disabled {
-            opacity: 0.4 !important;
-            cursor: not-allowed;
-            background: #f3f4f6;
-            border-color: #e5e7eb;
-            color: #9ca3af;
-            pointer-events: none;
-            filter: grayscale(30%);
-            font-weight: 400;
-        }
-
-        /* 5. Locked - Tipe yang tidak sesuai data */
-        .toggle-btn.locked {
-            opacity: 0.3 !important;
-            cursor: not-allowed;
-            pointer-events: none;
-            filter: grayscale(50%);
-            font-weight: 400;
-            position: relative;
-        }
-
-        /* Override: Active HARUS mengalahkan disabled dan locked */
-        .toggle-btn.active[disabled],
-        .toggle-btn.active.locked {
-            opacity: 1 !important;
-            filter: none !important;
-            pointer-events: auto;
-            cursor: pointer;
-        }
-
-        /* ============================================ */
-        /* REMINDER BUTTON (3/7/30 Hari)                */
-        /* ============================================ */
-
-        .reminder-btn {
-            border: 2px solid #d1d5db;
-            color: #6b7280;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 1;
-        }
-
-        .reminder-btn:not([disabled]):hover {
-            border-color: #4f46e5;
-            background: #faf8ff;
-            color: #4f46e5;
-        }
-
-        .reminder-btn.active {
-            border-color: #4f46e5 !important;
-            color: #4f46e5 !important;
-            background: #f0ebff !important;
-            font-weight: 600;
-            opacity: 1 !important;
-        }
-
-        .reminder-btn[disabled] {
-            opacity: 0.4 !important;
-            cursor: not-allowed;
-            background: #f3f4f6;
-            border-color: #e5e7eb;
-            color: #9ca3af;
-            pointer-events: none;
-        }
-
-        .reminder-btn.active[disabled] {
-            opacity: 1 !important;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-
-        /* ============================================ */
-        /* INPUT STYLES                                 */
-        /* ============================================ */
-
-        input[disabled],
-        input[readonly] {
-            cursor: not-allowed;
-            background-color: #f3f4f6 !important;
-            border-color: #e5e7eb !important;
-            color: #9ca3af !important;
-            opacity: 0.7;
-        }
-
-        input.filled {
-            background-color: #f9fafb !important;
-            border-color: #d1d5db !important;
-            color: #374151 !important;
-            cursor: default;
-            opacity: 1 !important;
-        }
-
-        /* ============================================ */
-        /* SUBMIT BUTTON                                */
-        /* ============================================ */
-
-        #submitReminder {
-            transition: all 0.3s ease;
-        }
-
-        #submitReminder:disabled {
-            background: #d1d5db !important;
-            color: #9ca3af !important;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transform: none !important;
-        }
-
-        #submitReminder:not(:disabled):hover {
-            background: #4a00cc;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(98, 0, 255, 0.3);
-        }
-
-        #submitReminder:not(:disabled):active {
-            transform: translateY(0);
-        }
-
-        /* ============================================ */
-        /* CALENDAR CELL                                */
-        /* ============================================ */
-
-        .rm-cal-cell {
-            min-height: 98px;
-            border-right: 1px solid #f3f4f6;
-            border-bottom: 1px solid #f3f4f6;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            position: relative;
-        }
-
-        .rm-cal-cell:hover {
-            background-color: #faf8ff;
-        }
-
-        .rm-cal-cell:nth-child(7n) {
-            border-right: none;
-        }
-
-        .rm-cal-cell.today {
-            background-color: #f0ebff;
-        }
-
-        .rm-cal-cell.today .rm-date-num {
-            color: #4f46e5;
-            font-weight: 700;
-        }
-
-        .rm-cal-cell.selected {
-            background-color: #e8e0ff;
-            box-shadow: inset 0 0 0 2px #4f46e5;
-        }
-
-        .rm-cal-cell.has-event {
-            background-color: #fff5f5;
-        }
-
-        .rm-date-top {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 8px;
-        }
-
-        .rm-date-num {
-            font-size: 14px;
-            color: #1f2937;
-            font-weight: 500;
-        }
-
-        .rm-date-num.muted {
-            color: #d1d5db;
-        }
-
-        /* ============================================ */
-        /* EVENT DOTS & BLOCKS                          */
-        /* ============================================ */
-
-        .rm-event-dot {
-            width: 6px;
-            height: 6px;
-            background: #ef4444;
-            border-radius: 50%;
-            flex-shrink: 0;
-            animation: pulse-dot 2s infinite;
-        }
-
-        .rm-event-dot.reminder-dot {
-            background: #a78bfa;
-            animation: pulse-dot 3s infinite;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.3);
-                opacity: 0.7;
-            }
-        }
-
-        .rm-event-block {
-            background: #fef2f2;
-            border-left: 3px solid #4f46e5;
-            padding: 6px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #4f46e5;
-            margin-top: auto;
-            line-height: 1.3;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .rm-event-block:hover {
-            transform: scale(1.02);
-            background: #fee2e2;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
-        }
-
-        .rm-event-block.overdue {
-            background: #fee2e2;
-            border-left-color: #991b1b;
-            color: #991b1b;
-        }
-
-        /* ============================================ */
-        /* MINI CALENDAR                                */
-        /* ============================================ */
-
-        .rm-mini-day {
-            font-size: 11px;
-            font-weight: 600;
-            color: #374151;
-            height: 28px;
-            width: 28px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .rm-mini-date {
-            font-size: 11px;
-            color: #6b7280;
-            height: 28px;
-            width: 28px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-        }
-
-        .rm-mini-date.muted {
-            color: #d1d5db;
-        }
-
-        .rm-mini-date.due-date-full {
-            background: #4f46e5;
-            color: white;
-            font-weight: 600;
-        }
-
-        .rm-mini-date.preview-outline {
-            border: 1.5px solid #4f46e5;
-            color: #4f46e5;
-            font-weight: 500;
-        }
-
-        .rm-mini-date.today-subtle {
-            background: #f3f4f6;
-            color: #374151;
-            font-weight: 600;
-        }
-
-        .rm-mini-date.has-event {
-            position: relative;
-        }
-
-        .rm-mini-date.has-event::after {
-            content: '';
-            position: absolute;
-            bottom: 3px;
-            width: 4px;
-            height: 4px;
-            background: #4f46e5;
-            border-radius: 50%;
-        }
-
-        /* ============================================ */
-        /* MODAL                                        */
-        /* ============================================ */
-
-        #eventDetailModal {
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        #eventDetailModal>div {
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        #modalCloseBtn {
-            transition: all 0.3s ease;
-        }
-
-        #modalCloseBtn:hover {
-            color: #4f46e5;
-            transform: rotate(90deg);
-        }
-
-        /* ============================================ */
-        /* ALERTS & ANIMATIONS                          */
-        /* ============================================ */
-
-        .animate-fadeIn {
-            animation: fadeInDown 0.3s ease-in;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-success {
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-            color: #166534;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background: #fef2f2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-    </style>
 </head>
 
 <body class="bg-gray-50 font-sans antialiased">
@@ -457,31 +40,214 @@ if (!isset($pageTitle)) {
                     <img src="assets/logo-pajaken.svg" alt="Logo Pajaken" class="h-10" />
                 </a>
 
+                <!-- Desktop Navigation -->
                 <nav class="hidden md:flex bg-white rounded-full p-1.5 shadow-sm border border-gray-100">
-                    <a href="homepage.php" class="px-6 py-2.5 rounded-full text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+                    <a href="homepage.php"
+                        class="px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 <?php echo $currentPage == 'homepage.php' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary hover:bg-primary-light/30'; ?>">
                         Beranda
                     </a>
-                    <a href="tax-check.php" class="px-6 py-2.5 rounded-full text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+                    <a href="tax-check.php"
+                        class="px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 <?php echo $currentPage == 'tax-check.php' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary hover:bg-primary-light/30'; ?>">
                         Cek Pajak
                     </a>
-                    <a href="reminder.php" class="px-6 py-2.5 rounded-full text-sm font-medium bg-primary text-white">
+                    <a href="reminder.php"
+                        class="px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 <?php echo $currentPage == 'reminder.php' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary hover:bg-primary-light/30'; ?>">
                         Pengingat
                     </a>
                 </nav>
 
-                <div class="flex items-center gap-4">
-                    <div class="relative cursor-pointer">
-                        <svg width="24" height="24" fill="none" stroke="#6200ff" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9zm-6 13a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
-                        </svg>
-                        <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></div>
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" onclick="toggleMobileMenu()">
+                    <svg id="menuIconOpen" width="24" height="24" fill="none" stroke="#6200ff" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <svg id="menuIconClose" width="24" height="24" fill="none" stroke="#6200ff" stroke-width="2" viewBox="0 0 24 24" class="hidden">
+                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                </button>
+
+                <!-- Right Icons (Desktop) -->
+                <div class="hidden md:flex items-center gap-5">
+                    <!-- Notification Bell dengan Dropdown -->
+                    <div class="relative">
+                        <div class="relative cursor-pointer" onclick="toggleNotificationDropdown()">
+                            <svg width="24" height="24" fill="none" stroke="#6200ff" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9zm-6 13a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+                            </svg>
+                            <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></div>
+                        </div>
+
+                        <!-- Notification Dropdown -->
+                        <div id="notificationDropdown" class="notification-dropdown hidden">
+                            <!-- Header -->
+                            <div class="dropdown-header">
+                                <h3>Notifikasi</h3>
+                                <button onclick="markAllAsRead(event)" class="dropdown-mark-read">Tandai semua telah dibaca</button>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="dropdown-body">
+                                <?php
+                                $notifications = [
+                                    [
+                                        'id' => 1,
+                                        'type' => 'jatuh_tempo',
+                                        'title' => 'Pajak Motor Jatuh Tempo',
+                                        'message' => 'Pajak motor B 1234 ABC akan jatuh tempo pada 21 April 2026.',
+                                        'time' => '2 hari yang lalu',
+                                        'read' => false
+                                    ],
+                                    [
+                                        'id' => 2,
+                                        'type' => 'info',
+                                        'title' => 'Pengingat Aktif',
+                                        'message' => 'Pengingat 7 hari sebelum pajak motor B 1234 ABC jatuh tempo.',
+                                        'time' => '3 hari yang lalu',
+                                        'read' => false
+                                    ],
+                                    [
+                                        'id' => 3,
+                                        'type' => 'selesai',
+                                        'title' => 'Pembayaran Berhasil',
+                                        'message' => 'Pembayaran pajak untuk kendaraan DK 4567 BCD telah berhasil.',
+                                        'time' => '5 hari yang lalu',
+                                        'read' => true
+                                    ]
+                                ];
+
+                                if (!empty($notifications)):
+                                    foreach ($notifications as $notif):
+                                        $iconColors = [
+                                            'info' => '#3b82f6',
+                                            'maintenance' => '#f59e0b',
+                                            'event' => '#8b5cf6',
+                                            'promo' => '#10b981',
+                                            'jatuh_tempo' => '#ef4444',
+                                            'selesai' => '#10b981',
+                                            'masalah' => '#f97316'
+                                        ];
+                                        $iconBg = $iconColors[$notif['type']] ?? '#6b7280';
+                                ?>
+                                        <div class="dropdown-notif-item <?php echo !$notif['read'] ? 'unread' : ''; ?>">
+                                            <div class="dropdown-notif-icon" style="background: <?php echo $iconBg; ?>;">
+                                                <?php if ($notif['type'] === 'jatuh_tempo'): ?>
+                                                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <path d="M12 6v6l4 2"></path>
+                                                    </svg>
+                                                <?php elseif ($notif['type'] === 'selesai'): ?>
+                                                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+                                                        <path d="M22 4L12 14.01l-3-3"></path>
+                                                    </svg>
+                                                <?php else: ?>
+                                                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <path d="M12 16v-4M12 8h.01"></path>
+                                                    </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="dropdown-notif-content">
+                                                <p class="dropdown-notif-title"><?php echo htmlspecialchars($notif['title']); ?></p>
+                                                <p class="dropdown-notif-desc"><?php echo htmlspecialchars($notif['message']); ?></p>
+                                                <span class="dropdown-notif-time"><?php echo htmlspecialchars($notif['time']); ?></span>
+                                            </div>
+                                            <?php if (!$notif['read']): ?>
+                                                <div class="dropdown-notif-dot"></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php
+                                    endforeach;
+                                else:
+                                    ?>
+                                    <div class="dropdown-empty">
+                                        <p class="dropdown-empty-text">Tidak ada notifikasi</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <a href="notification.php" class="dropdown-view-all">Lihat Semua Notifikasi</a>
+                        </div>
                     </div>
+
+                    <!-- Avatar -->
                     <a href="profile-info.php">
-                        <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary">
+                        <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary hover:border-primary-dark transition-colors">
                             <img src="assets/profile.svg" alt="profile" class="w-full h-full object-cover" />
                         </div>
                     </a>
                 </div>
             </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100 mt-3 pt-3">
+                <nav class="flex flex-col gap-2">
+                    <a href="homepage.php"
+                        class="px-4 py-3 rounded-lg text-sm font-medium transition-all <?php echo $currentPage == 'homepage.php' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-primary-light'; ?>">
+                        Beranda
+                    </a>
+                    <a href="tax-check.php"
+                        class="px-4 py-3 rounded-lg text-sm font-medium transition-all <?php echo $currentPage == 'tax-check.php' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-primary-light'; ?>">
+                        Cek Pajak
+                    </a>
+                    <a href="reminder.php"
+                        class="px-4 py-3 rounded-lg text-sm font-medium transition-all <?php echo $currentPage == 'reminder.php' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-primary-light'; ?>">
+                        Pengingat
+                    </a>
+                    <div class="border-t border-gray-100 pt-2 mt-2">
+                        <a href="notification.php" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-primary-light flex items-center gap-3">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9zm-6 13a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+                            </svg>
+                            Notifikasi
+                        </a>
+                        <a href="profile-info.php" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-primary-light flex items-center gap-3">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Profil
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
         </div>
     </header>
+
+    <script>
+        // Toggle Mobile Menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const iconOpen = document.getElementById('menuIconOpen');
+            const iconClose = document.getElementById('menuIconClose');
+
+            menu.classList.toggle('hidden');
+            iconOpen.classList.toggle('hidden');
+            iconClose.classList.toggle('hidden');
+        }
+
+        // Notification Dropdown (dari sebelumnya)
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const bell = event.target.closest('[onclick="toggleNotificationDropdown()"]');
+
+            if (!bell && dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function markAllAsRead(event) {
+            event.stopPropagation();
+            document.querySelectorAll('.dropdown-notif-item.unread').forEach(item => {
+                item.classList.remove('unread');
+                const dot = item.querySelector('.dropdown-notif-dot');
+                if (dot) dot.remove();
+            });
+        }
+    </script>
