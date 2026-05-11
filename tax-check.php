@@ -119,7 +119,7 @@ include 'includes/header.php';
 
                     if (data.trim() === "ada") {
                         localStorage.setItem("plat", plat);
-                        window.location.href = "vehicle-list.php";
+                        window.location.href = "vehicle-list-tax.php";
                     } else {
                         alert("Nomor plat tidak terdaftar");
                     }

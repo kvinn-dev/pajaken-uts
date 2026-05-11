@@ -36,7 +36,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <header class="fixed top-0 left-0 right-0 z-40 backdrop-blur-sm">
         <div class="mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
-                <a href="index.php" class="flex-shrink-0">
+                <a href="homepage.php" class="flex-shrink-0">
                     <img src="assets/logo-pajaken.svg" alt="Logo Pajaken" class="h-10" />
                 </a>
 

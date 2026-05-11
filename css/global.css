@@ -1404,6 +1404,10 @@ input.filled {
   }
 }
 
+/* ============================================ */
+/* SECTION HOMEPAGE                             */
+/* ============================================ */
+
 /* TITLE */
 .title {
   padding: 160px 40px 20px 40px;
@@ -1502,6 +1506,10 @@ input.filled {
   font-size: 28px;
   font-weight: bold;
 }
+
+/* ============================================ */
+/* SECTION CEK PAJAK                                 */
+/* ============================================ */
 
 /* Footer - prefix .tax- */
 .tax-footer-hp {

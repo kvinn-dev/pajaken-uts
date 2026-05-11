@@ -94,7 +94,7 @@ include 'includes/header.php';
     <!-- ACTION BUTTON -->
     <div class="action">
         <button>Batalkan</button>
-        <button>Lakukan Pembayaran</button>
+        <button>Cek Pembayaran</button>
     </div>
 
     <script>
