@@ -73,21 +73,6 @@ $notifications = [
     ]
 ];
 
-// Fungsi untuk menghitung waktu relatif
-function diffForHumans($datetime)
-{
-    $timestamp = strtotime($datetime);
-    $now = time();
-    $diff = $now - $timestamp;
-
-    if ($diff < 60) return 'Baru saja';
-    if ($diff < 3600) return floor($diff / 60) . ' menit yang lalu';
-    if ($diff < 86400) return floor($diff / 3600) . ' jam yang lalu';
-    if ($diff < 604800) return floor($diff / 86400) . ' hari yang lalu';
-    if ($diff < 2592000) return floor($diff / 604800) . ' minggu yang lalu';
-    return date('d M Y', $timestamp);
-}
-
 // Tandai semua dibaca (via POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
     // Di sini update database

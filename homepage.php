@@ -25,12 +25,11 @@ $pajakJatuhTempo = 1;
 
     <div class="cards">
 
-        <a href="tax-check.php" class="card-link">
-            <div class="card">
-                <p>Total Kendaraan</p>
-                <h1 class="blue"><?php echo $totalKendaraan; ?></h1>
-            </div>
-        </a>
+
+        <div class="card">
+            <p>Total Kendaraan</p>
+            <h1 class="blue"><?php echo $totalKendaraan; ?></h1>
+        </div>
 
         <div class="card">
             <p>Pajak Jatuh Tempo</p>
@@ -40,7 +39,7 @@ $pajakJatuhTempo = 1;
     </div>
 
     <div class="cards bottom">
-        <a href="tax-check.php" class="card-link">
+        <a href="add-vehicle.php" class="card-link">
             <div class="card big">
                 <div class="card-header-hp">
                     <img src="assets/plus.png" alt="Tambahkan">
@@ -53,7 +52,7 @@ $pajakJatuhTempo = 1;
             </div>
         </a>
 
-        <a href="tax-check.php" class="card-link">
+        <a href="vehicle-list.php" class="card-link">
             <div class="card big">
                 <div class="card-header-hp">
                     <img src="assets/Kaca.png" alt="Cek Kendaraan">
