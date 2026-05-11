@@ -7,37 +7,129 @@ include 'includes/header-plain.php';
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $conn = getDB();
 
     if ($action === 'update_profile') {
-        // Update profile data
-        $userData['first_name'] = $_POST['first_name'] ?? $userData['first_name'];
-        $userData['last_name'] = $_POST['last_name'] ?? $userData['last_name'];
-        $userData['email'] = $_POST['email'] ?? $userData['email'];
-        $userData['phone'] = $_POST['phone'] ?? $userData['phone'];
+        // Update profile data ke database
+        $stmt = $conn->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ?");
+        $userId = 1; // Ganti dengan session user ID
+        $stmt->bind_param(
+            "ssssi",
+            $_POST['first_name'],
+            $_POST['last_name'],
+            $_POST['email'],
+            $_POST['phone'],
+            $userId
+        );
 
-        $_SESSION['success'] = 'Profil berhasil diperbarui!';
+        if ($stmt->execute()) {
+            // Update session
+            $_SESSION['user_data']['first_name'] = $_POST['first_name'];
+            $_SESSION['user_data']['last_name'] = $_POST['last_name'];
+            $_SESSION['user_data']['email'] = $_POST['email'];
+            $_SESSION['user_data']['phone'] = $_POST['phone'];
+
+            $_SESSION['success'] = 'Profil berhasil diperbarui!';
+        } else {
+            $_SESSION['error'] = 'Gagal memperbarui profil!';
+        }
+
+        $stmt->close();
         header('Location: profile-info.php');
         exit;
     }
 
     if ($action === 'update_address') {
-        // Update address data
-        $userData['province'] = $_POST['province'] ?? $userData['province'];
-        $userData['city'] = $_POST['city'] ?? $userData['city'];
-        $userData['district'] = $_POST['district'] ?? $userData['district'];
-        $userData['village'] = $_POST['village'] ?? $userData['village'];
-        $userData['address_detail'] = $_POST['address_detail'] ?? $userData['address_detail'];
+        $userId = 1;
+        // Cek apakah sudah ada alamat
+        $check = $conn->query("SELECT id FROM alamat WHERE user_id = $userId");
 
-        $_SESSION['success'] = 'Alamat berhasil diperbarui!';
+        if ($check->num_rows > 0) {
+            // Update alamat yang sudah ada
+            $stmt = $conn->prepare("UPDATE alamat SET province = ?, city = ?, district = ?, village = ?, address_detail = ? WHERE user_id = ?");
+            $stmt->bind_param(
+                "sssssi",
+                $_POST['province'],
+                $_POST['city'],
+                $_POST['district'],
+                $_POST['village'],
+                $_POST['address_detail'],
+                $userId
+            );
+        } else {
+            // Insert alamat baru
+            $stmt = $conn->prepare("INSERT INTO alamat (user_id, province, city, district, village, address_detail) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "isssss",
+                $userId,
+                $_POST['province'],
+                $_POST['city'],
+                $_POST['district'],
+                $_POST['village'],
+                $_POST['address_detail']
+            );
+        }
+
+        if ($stmt->execute()) {
+            // Update session
+            $_SESSION['user_data']['province'] = $_POST['province'];
+            $_SESSION['user_data']['city'] = $_POST['city'];
+            $_SESSION['user_data']['district'] = $_POST['district'];
+            $_SESSION['user_data']['village'] = $_POST['village'];
+            $_SESSION['user_data']['address_detail'] = $_POST['address_detail'];
+
+            $_SESSION['success'] = 'Alamat berhasil diperbarui!';
+        } else {
+            $_SESSION['error'] = 'Gagal memperbarui alamat!';
+        }
+
+        $stmt->close();
         header('Location: profile-info.php');
         exit;
     }
+
+    $conn->close();
 }
 
 $success = $_SESSION['success'] ?? null;
-unset($_SESSION['success']);
-?>
+$error = $_SESSION['error'] ?? null;
+unset($_SESSION['success'], $_SESSION['error']);
 
+// Ambil data user dari database untuk ditampilkan
+$conn = getDB();
+$userId = 3;
+$stmt = $conn->prepare("
+    SELECT u.*, 
+           a.province, 
+           a.city, 
+           a.district, 
+           a.village, 
+           a.address_detail
+    FROM users u
+    LEFT JOIN alamat a ON u.id = a.user_id
+    WHERE u.id = ?
+");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$userData = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+// Jika user tidak ditemukan, gunakan data default
+if (!$userData) {
+    $userData = [
+        'first_name' => 'User',
+        'last_name' => '',
+        'email' => '',
+        'phone' => '',
+        'province' => '',
+        'city' => '',
+        'district' => '',
+        'village' => '',
+        'address_detail' => ''
+    ];
+}
+?>
 <!-- Profile Header -->
 <div class="relative bg-gradient-to-r from-primary to-purple-700 h-[200px]">
     <div class="mx-auto px-6">
@@ -78,7 +170,7 @@ unset($_SESSION['success']);
     <!-- User Info -->
     <div class="mt-24 ml-10">
         <h1 class="text-3xl font-bold text-gray-800">
-            <?php echo htmlspecialchars($userData['first_name'] . ' ' . $userData['last_name']); ?>
+            <?php echo htmlspecialchars(($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '')); ?>
         </h1>
         <div class="flex items-center gap-2 mt-2">
             <svg width="16" height="16" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
@@ -148,7 +240,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="first_name"
-                            value="<?php echo htmlspecialchars($userData['first_name']); ?>"
+                            value="<?php echo htmlspecialchars($userData['first_name'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required />
@@ -159,7 +251,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="last_name"
-                            value="<?php echo htmlspecialchars($userData['last_name']); ?>"
+                            value="<?php echo htmlspecialchars($userData['last_name'] ?? ''); ?>"
                             class="profile-input"
                             disabled />
                     </div>
@@ -171,7 +263,7 @@ unset($_SESSION['success']);
                         <input
                             type="email"
                             name="email"
-                            value="<?php echo htmlspecialchars($userData['email']); ?>"
+                            value="<?php echo htmlspecialchars($userData['email'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required />
@@ -184,7 +276,7 @@ unset($_SESSION['success']);
                         <input
                             type="text"
                             name="phone"
-                            value="<?php echo htmlspecialchars($userData['phone']); ?>"
+                            value="<?php echo htmlspecialchars($userData['phone'] ?? ''); ?>"
                             class="profile-input"
                             disabled
                             required
@@ -244,9 +336,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="city" class="profile-select" disabled required>
                             <option value="">Pilih Kab/Kota</option>
-                            <option value="Bekasi" <?php echo $userData['city'] === 'Bekasi' ? 'selected' : ''; ?>>Bekasi</option>
-                            <option value="Jakarta" <?php echo $userData['city'] === 'Jakarta' ? 'selected' : ''; ?>>Jakarta</option>
-                            <option value="Bandung" <?php echo $userData['city'] === 'Bandung' ? 'selected' : ''; ?>>Bandung</option>
+                            "<?php echo htmlspecialchars($userData['city']); ?>"
                         </select>
                     </div>
 
@@ -256,8 +346,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="district" class="profile-select" disabled required>
                             <option value="">Pilih Kecamatan</option>
-                            <option value="Mustika Jaya" <?php echo $userData['district'] === 'Mustika Jaya' ? 'selected' : ''; ?>>Mustika Jaya</option>
-                            <option value="Bekasi Utara" <?php echo $userData['district'] === 'Bekasi Utara' ? 'selected' : ''; ?>>Bekasi Utara</option>
+                            "<?php echo htmlspecialchars($userData['district'] ?? ''); ?>"
                         </select>
                     </div>
 
@@ -267,7 +356,7 @@ unset($_SESSION['success']);
                         </label>
                         <select name="village" class="profile-select" disabled required>
                             <option value="">Pilih Kelurahan</option>
-                            <option value="Mustika Jaya" <?php echo $userData['village'] === 'Mustika Jaya' ? 'selected' : ''; ?>>Mustika Jaya</option>
+                            "<?php echo htmlspecialchars($userData['village'] ?? ''); ?>"
                         </select>
                     </div>
 
